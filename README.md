@@ -87,3 +87,27 @@ python scripts\producer.py --messages 2000 --batch-size 100 --sleep-ms 50 --writ
 ```powershell
 docker exec upu-db-1 mongosh hospital --quiet --eval "print('DONE:', db.events_queue.countDocuments({state:'DONE'})); print('results:', db.events_results.countDocuments())"
 ```
+
+### Repeated multi-run statistics
+
+Run the same producer/consumer scenario multiple times and export a CSV summary:
+
+```powershell
+.\scripts\scenario_multirun_stats.ps1 -Runs 5 -Messages 1000
+```
+
+Output:
+
+- `multirun_summary.csv` with per-run values (`done`, `results`, avg/min/max latency, producer/consumer throughput).
+
+### Concurrency scaling beyond one producer/consumer pair
+
+Run a grid of producer/consumer parallelism levels:
+
+```powershell
+.\scripts\scenario_concurrency_scale.ps1 -ProducerCounts 1,2,4 -ConsumerCounts 1,2,4 -MessagesPerProducer 1000
+```
+
+Output:
+
+- `concurrency_scaling_summary.csv` with one row per `(producers, consumers)` combination.

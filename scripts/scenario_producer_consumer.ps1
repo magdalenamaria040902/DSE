@@ -9,7 +9,6 @@ Start-Sleep -Seconds 5
 
 docker exec upu-db-1 mongosh --quiet --eval "rs.status().members.forEach(m => print(m.name, m.stateStr))" | Out-Host
 
-# 2) Optional cleanup from previous runs
 docker exec upu-db-1 mongosh hospital --quiet --eval "db.events_queue.drop(); db.events_results.drop(); print('dropped events collections')" | Out-Host
 
 # 3) Start consumer first (so it can immediately drain queue)

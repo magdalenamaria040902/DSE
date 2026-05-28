@@ -29,6 +29,11 @@ def parse_args() -> argparse.Namespace:
         default="majority",
         help="Write concern for updates/inserts",
     )
+    p.add_argument(
+        "--worker-name",
+        default="consumer.py",
+        help="Logical consumer identifier stored in queue/results",
+    )
     return p.parse_args()
 
 
@@ -61,7 +66,7 @@ def main() -> None:
     t0 = time.perf_counter()
 
     print(
-        f"[consumer] queue={args.db}.{args.queue} max_messages={args.max_messages} "
+        f"[consumer:{args.worker_name}] queue={args.db}.{args.queue} max_messages={args.max_messages} "
         f"w={args.write_concern}"
     )
 
@@ -72,7 +77,7 @@ def main() -> None:
                 "$set": {
                     "state": "PROCESSING",
                     "claimed_at": now_utc(),
-                    "consumer": "consumer.py",
+                    "consumer": args.worker_name,
                 }
             },
             sort=[("created_at", 1)],
@@ -81,7 +86,7 @@ def main() -> None:
 
         if event is None:
             if (time.perf_counter() - idle_start) >= args.idle_timeout_s:
-                print(f"[consumer] idle timeout reached ({args.idle_timeout_s}s), stopping.")
+                print(f"[consumer:{args.worker_name}] idle timeout reached ({args.idle_timeout_s}s), stopping.")
                 break
             time.sleep(args.poll_ms / 1000.0)
             continue
@@ -113,6 +118,7 @@ def main() -> None:
                 "encounter_id": event.get("encounter_id"),
                 "patient_nbr": event.get("patient_nbr"),
                 "event_type": event.get("event_type"),
+                "consumer": args.worker_name,
                 "created_at": created_at,
                 "done_at": done_at,
                 "work_ms": work_ms,
@@ -124,11 +130,11 @@ def main() -> None:
         if consumed % 100 == 0:
             elapsed = time.perf_counter() - t0
             rate = consumed / elapsed if elapsed > 0 else 0.0
-            print(f"[consumer] consumed={consumed} avg_rate={rate:.1f} msg/s")
+            print(f"[consumer:{args.worker_name}] consumed={consumed} avg_rate={rate:.1f} msg/s")
 
     total_s = time.perf_counter() - t0
     print(
-        f"[consumer] DONE consumed={consumed} total_s={total_s:.2f} "
+        f"[consumer:{args.worker_name}] DONE consumed={consumed} total_s={total_s:.2f} "
         f"throughput={consumed / total_s:.1f} msg/s"
     )
 

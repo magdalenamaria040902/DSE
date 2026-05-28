@@ -32,6 +32,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Drop queue collection before publishing",
     )
+    p.add_argument(
+        "--worker-name",
+        default="producer.py",
+        help="Logical producer identifier stored with each event",
+    )
     return p.parse_args()
 
 
@@ -60,7 +65,7 @@ def main() -> None:
     t0 = time.perf_counter()
 
     print(
-        f"[producer] source={args.db}.{args.source} queue={args.db}.{args.queue} "
+        f"[producer:{args.worker_name}] source={args.db}.{args.source} queue={args.db}.{args.queue} "
         f"messages={args.messages} batch={args.batch_size} w={args.write_concern}"
     )
 
@@ -86,7 +91,7 @@ def main() -> None:
                     "readmitted": d.get("readmitted"),
                     "state": "NEW",
                     "created_at": now_utc(),
-                    "producer": "producer.py",
+                    "producer": args.worker_name,
                 }
             )
 
@@ -95,14 +100,14 @@ def main() -> None:
 
         elapsed = time.perf_counter() - t0
         rate = produced / elapsed if elapsed > 0 else 0.0
-        print(f"[producer] produced={produced}/{args.messages} avg_rate={rate:.1f} msg/s")
+        print(f"[producer:{args.worker_name}] produced={produced}/{args.messages} avg_rate={rate:.1f} msg/s")
 
         if args.sleep_ms > 0:
             time.sleep(args.sleep_ms / 1000.0)
 
     total_s = time.perf_counter() - t0
     print(
-        f"[producer] DONE produced={produced} total_s={total_s:.2f} "
+        f"[producer:{args.worker_name}] DONE produced={produced} total_s={total_s:.2f} "
         f"throughput={produced / total_s:.1f} msg/s"
     )
 
