@@ -1,0 +1,50 @@
+services:
+
+  upu-db-1:
+    image: mongo:8.2.6
+    container_name: upu-db-1
+    hostname: upu-db-1
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - data1:/data/db
+      - ./scripts:/scripts:ro
+    networks:
+      - mongo-cluster
+    restart: unless-stopped
+
+  upu-db-2:
+    image: mongo:8.2.6
+    container_name: upu-db-2
+    hostname: upu-db-2
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - data2:/data/db
+    networks:
+      - mongo-cluster
+    restart: unless-stopped
+
+  upu-db-3:
+    image: mongo:8.2.6
+    container_name: upu-db-3
+    hostname: upu-db-3
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27019:27017"
+    volumes:
+      - data3:/data/db
+    networks:
+      - mongo-cluster
+    restart: unless-stopped
+
+volumes:
+  data1:
+  data2:
+  data3:
+
+networks:
+  mongo-cluster:
+    driver: bridge
